@@ -1,0 +1,5 @@
+{
+  "name": "SOL Payment v1",
+  "description": "Trang thanh toán QR Code tích hợp mô phỏng luồng Sepay, không cần backend, deploy ngay lên Vercel.",
+  "requestFramePermissions": []
+}

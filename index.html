@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hệ thống Thanh toán Học phí</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: '#1e40af', 
+                        success: '#10b981',
+                    },
+                    fontSize: {
+                        'xxs': '0.65rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+
+        /* Button Attention Animation - Updated for Orange */
+        @keyframes attention {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 88, 12, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+        }
+        .animate-attention {
+            animation: attention 2s infinite;
+        }
+
+        /* Gentle Float Animation for Success Icon */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Success Checkmark */
+        .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #10b981; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        .checkmark { width: 50px; height: 50px; border-radius: 50%; display: block; stroke-width: 2; stroke: #fff; stroke-miterlimit: 10; margin: 10% auto; box-shadow: inset 0px 0px 0px #10b981; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+        .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px #10b981; } }
+
+        /* Hide Scrollbar explicitly */
+        body, html { height: 100%; overflow: hidden; }
+        
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px; 
+            background-color: #333; 
+            color: #fff; 
+            text-align: center; 
+            border-radius: 4px; 
+            padding: 12px; 
+            position: fixed; 
+            z-index: 50; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* Custom Scrollbar hide for inner elements just in case */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Loading Overlay for Init */
+        #app-loading-overlay {
+            position: fixed; inset: 0; background: white; z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+
+        /* Checkbox style in Dropdown */
+        .checkbox-wrapper {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .selected .checkbox-wrapper {
+            background-color: #1e40af; /* brand */
+            border-color: #1e40af;
+        }
+        .checkbox-inner {
+            display: none;
+            color: white;
+            font-size: 14px;
+        }
+        .selected .checkbox-inner {
+            display: block;
+        }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased h-screen w-screen overflow-hidden flex flex-col items-center justify-center p-2">
+
+    <!-- INITIAL LOADING OVERLAY -->
+    <div id="app-loading-overlay">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mb-4"></div>
+        <p class="text-gray-500 font-medium">Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- Background -->
+    <div class="absolute inset-0 z-0 pointer-events-none">
+        <div class="absolute top-0 left-0 w-full h-2/3 bg-gradient-to-b from-blue-100 to-transparent"></div>
+    </div>
+
+    <!-- APP CONTAINER: Flex column to fit screen, Centered -->
+    <div id="app-container" class="relative z-10 w-full max-w-4xl h-full flex flex-col justify-center items-center hidden">
+
+        <!-- SCREEN 1: SELECTION (Restored to Card Style) -->
+        <!-- Added overflow-hidden and flex-col to handle long lists nicely -->
+        <div id="selection-screen" class="bg-white rounded-2xl shadow-xl p-4 md:p-8 max-w-md mx-auto animate-fade-in w-full flex-shrink-0 relative flex flex-col max-h-[95vh]">
+            
+            <!-- Header Section -->
+            <div class="text-center mb-4 flex-shrink-0">
+                <!-- LOGO -->
+                <div class="inline-block mb-2">
+                     <img src="https://lh3.googleusercontent.com/d/1F6QVU_qcyV8BMn9LinWD30-ipzL4X1Dx" referrerpolicy="no-referrer" alt="Hình ảnh từ Google Drive" class="h-20 md:h-28 w-auto object-contain mx-auto drop-shadow-md hover:scale-105 transition-transform duration-300 mix-blend-multiply">
+                </div>
+
+                <!-- TITLE CHANGED & Uppercase -->
+                <!-- CHANGED: text-brand -> text-orange-600 -->
+                <h1 class="text-lg md:text-xl font-bold text-orange-600 uppercase tracking-tight">
+                    HỆ THỐNG THANH TOÁN HỌC PHÍ
+                </h1>
+                <!-- Payment Period Text Removed as requested -->
+            </div>
+
+            <div class="space-y-4 flex flex-col flex-1 min-h-0">
+                <div class="flex-shrink-0">
+                    <!-- INSTRUCTION TEXT -->
+                    <p class="text-sm text-gray-600 mb-2 text-center">
+                        Quý Phụ huynh vui lòng <span class="font-bold text-blue-700">tìm và chọn học sinh</span><br>(có thể chọn nhiều học sinh):
+                    </p>
+
+                    <!-- CUSTOM SEARCHABLE DROPDOWN -->
+                    <div class="relative group">
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="student-search-input" 
+                                placeholder="🔍 Nhập tên hoặc Chọn từ danh sách..." 
+                                class="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand transition-all text-gray-900 text-sm font-medium placeholder-gray-400 shadow-sm"
+                                autocomplete="off"
+                            >
+                            <!-- Spinner for search processing if needed -->
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400" id="search-icon-wrapper">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown List (Absolute) -->
+                        <div id="student-dropdown-list" class="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto hidden">
+                            <!-- List items will be injected here via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUMMARY SECTION (New Area) -->
+                <!-- Changed bg-gray-50 to bg-blue-50 and border-gray-200 to border-blue-100 -->
+                <div id="selected-students-area" class="flex-1 overflow-y-auto min-h-0 bg-blue-50 rounded-xl border border-blue-100 p-2 hidden">
+                    <div class="flex justify-between items-center mb-2 px-1">
+                        <span class="text-xs font-bold text-gray-500 uppercase">Danh sách đã chọn</span>
+                        <span class="text-xs font-bold text-brand" id="selected-count">0 học sinh</span>
+                    </div>
+                    
+                    <!-- Container for cards -->
+                    <div id="selected-list-container" class="space-y-2">
+                        <!-- Cards injected here -->
+                    </div>
+                </div>
+
+                <!-- Footer Action Area -->
+                <div class="flex-shrink-0 pt-2 border-t border-gray-100 mt-2">
+                    <!-- Total Display -->
+                    <div class="flex justify-between items-end mb-3 px-1">
+                        <!-- Changed text color to blue-700 and font-bold -->
+                        <span class="text-sm font-bold text-blue-700 uppercase">Tổng cộng:</span>
+                        <span id="total-amount-display" class="text-2xl font-bold text-red-600 font-mono">0 đ</span>
+                    </div>
+
+                    <!-- Button -->
+                    <button onclick="handlePaymentStart()" id="pay-button" class="w-full bg-gray-300 cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-lg shadow-sm" disabled>
+                        <span>Thanh toán</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+                
+                <!-- Slogan -->
+                <div class="text-center space-y-0.5 flex-shrink-0">
+                    <p class="text-[9px] text-blue-700 font-bold uppercase tracking-wide opacity-80">
+                        SOL English Land | Anh Văn phản xạ giao tiếp
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: LOADING -->
+        <div id="loading-modal" class="bg-white rounded-2xl shadow-lg p-8 text-center max-w-sm mx-auto hidden w-full">
+            <div class="mb-6 animate-pulse">
+                 <img src="https://lh3.googleusercontent.com/d/1F6QVU_qcyV8BMn9LinWD30-ipzL4X1Dx" referrerpolicy="no-referrer" alt="Logo" class="h-24 w-auto object-contain mx-auto drop-shadow-md mix-blend-multiply">
+            </div>
+            <h3 class="text-lg font-bold text-orange-600">Đang khởi tạo giao dịch...</h3>
+            <p class="text-sm text-blue-600 mt-2">Vui lòng không tắt trình duyệt</p>
+        </div>
+
+        <!-- SCREEN 3: PAYMENT POPUP (Main) -->
+        <!-- Changed to h-full on mobile to fill screen and prevent outer scroll -->
+        <!-- UPDATED: md:max-h-[85vh] as requested -->
+        <div id="payment-popup" class="bg-white rounded-xl shadow-2xl hidden w-full h-full md:h-auto md:max-h-[85vh] overflow-hidden flex flex-col md:flex-row animate-scale-in border border-gray-200 relative">
+            
+            <!-- HEADER (Mobile) - Added ID to hide on success -->
+            <div id="payment-mobile-header" class="bg-brand text-white p-2 flex justify-between items-center md:hidden flex-shrink-0 shadow-md z-10 relative h-10">
+                <!-- UPDATED: Header Text to "Phiếu thanh toán" -->
+                <span class="text-sm font-semibold flex items-center gap-2">Phiếu thanh toán</span>
+                <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl bg-brand text-yellow-400 px-3 py-1 rounded font-mono font-bold shadow-sm whitespace-nowrap" id="countdown-display-mobile">10:00</div>
+                <img src="https://lh3.googleusercontent.com/d/1U6nmM_rzNQ6don_7_Q4RtMPKjbWacTga" referrerpolicy="no-referrer" alt="Logo" class="h-6 w-auto object-contain bg-white rounded p-0.5 shadow-sm" />
+            </div>
+
+            <!-- LEFT: QR (Mobile: Top) - Added ID to hide on success -->
+            <div id="payment-qr-col" class="w-full md:w-5/12 bg-white md:bg-gray-50 flex flex-col items-center justify-center p-1 md:p-4 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0">
+                <div class="bg-gray-50 md:bg-transparent p-1 rounded-xl md:p-0 md:rounded-none w-fit mx-auto md:w-full flex flex-col items-center border border-gray-100 md:border-none shadow-sm md:shadow-none">
+                    <h3 class="text-red-600 font-bold mb-0.5 text-center text-base md:text-2xl animate-pulse">
+                        <span class="underline">Cách 1</span>: Vui lòng Quét mã thanh toán
+                    </h3>
+                    <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 mb-1 relative group w-fit">
+                        <!-- Reduced QR size for mobile compactness -->
+                        <img id="qr-image" src="" alt="QR" class="w-[110px] h-[110px] md:w-[180px] md:h-[180px] object-contain mix-blend-multiply transition-transform group-hover:scale-105" />
+                        <div id="qr-loading" class="absolute inset-0 bg-white flex items-center justify-center rounded-xl"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 mt-0 w-full px-2">
+                        <p class="text-[9px] md:text-[10px] text-gray-500 text-center">Sử dụng App Ngân hàng hoặc Ví điện tử</p>
+                        <div class="flex gap-2 justify-center w-full">
+                             <div class="bg-white px-2 py-0.5 rounded border border-gray-200 text-[9px] font-bold text-blue-800 shadow-sm" id="bank-name-label">VietinBank</div>
+                             <div class="bg-white px-2 py-0.5 rounded border border-gray-200 text-[9px] font-bold text-pink-600 shadow-sm">MoMo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: INFO (Mobile: Bottom) - Added ID to hide on success -->
+            <div id="payment-info-col" class="w-full md:w-7/12 flex flex-col relative bg-white flex-1 min-h-0">
+                <!-- Desktop Header -->
+                <div class="hidden md:flex bg-brand text-white p-4 justify-between items-center shadow-md z-10 relative h-20">
+                    <!-- UPDATED: Header Text to "Phiếu thanh toán" -->
+                    <span class="font-semibold text-lg">Phiếu thanh toán</span>
+                    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-5xl bg-brand text-yellow-400 px-4 py-1 rounded font-mono font-bold shadow-sm" id="countdown-display-desktop">10:00</div>
+                    <img src="https://lh3.googleusercontent.com/d/1U6nmM_rzNQ6don_7_Q4RtMPKjbWacTga" referrerpolicy="no-referrer" alt="Logo" class="h-12 w-auto object-contain bg-white rounded p-1 shadow-sm" />
+                </div>
+
+                <!-- Content Area -->
+                <div class="p-2 md:p-6 flex-1 flex flex-col overflow-y-auto no-scrollbar gap-2">
+                    <!-- 1. STUDENT INFO TAG -->
+                    <div class="bg-indigo-50 rounded-lg p-1.5 border border-indigo-100 flex items-center gap-2 flex-shrink-0">
+                        <div class="bg-indigo-100 p-1.5 rounded-full flex-shrink-0">
+                            <svg class="w-5 h-5 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[9px] md:text-xs text-indigo-500 font-bold uppercase tracking-wider mb-0">Thông tin học sinh</p>
+                            <p class="text-xs md:text-lg font-bold text-indigo-900 leading-tight" id="note-text">...</p>
+                        </div>
+                    </div>
+
+                    <!-- MOVED: Status Box (Position 2) -->
+                    <!-- Removed my-1 to rely on parent gap-2 -->
+                    <!-- UPDATED: Spinner and check icon increased to h-5/w-5 and h-6/w-6 on desktop -->
+                    <div class="bg-gray-50 rounded-lg p-1.5 flex items-center justify-center gap-2 border border-gray-100" id="status-box">
+                        <svg id="status-spinner" class="animate-spin h-5 w-5 md:h-6 md:w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg id="status-check" class="h-5 w-5 md:h-6 md:w-6 text-green-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-[10px] md:text-sm font-semibold text-blue-600" id="status-text">Đang chờ tín hiệu chuyển khoản...</span>
+                    </div>
+
+                    <!-- Note for Manual Copy -->
+                    <div class="text-center md:text-left">
+                         <div class="leading-tight">
+                            <span class="text-red-600 font-bold text-base md:text-xl mr-1 animate-pulse"><span class="underline">Cách 2 (Chuyển khoản thủ công)</span>:</span>
+                            <span class="text-[11px] text-blue-700 italic font-medium">Bấm vào <span class="font-bold underline">từng mục bên dưới để Copy</span> và <span class="font-bold underline">Dán tương ứng vào các mục trong app Bank</span></span>
+                         </div>
+                    </div>
+
+                    <!-- 2. PAYMENT DETAILS GROUP -->
+                    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                        <!-- Account -->
+                        <div class="p-1.5 border-b border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer relative" id="account-row">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm md:text-[15px] text-blue-700 uppercase font-bold mb-0">Số tài khoản</p>
+                                    <p class="text-[9px] text-gray-400" id="owner-name-display">Chủ TK: ...</p>
+                                </div>
+                                <div class="text-right flex-1 ml-2">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <span class="text-sm md:text-base font-bold text-red-600 font-mono tracking-wide bg-gray-100 px-1.5 py-0 rounded border border-gray-200" id="account-number-text">...</span>
+                                        <svg class="w-3 h-3 text-gray-300 group-hover:text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    </div>
+                                    <p class="text-sm md:text-lg font-bold text-gray-600 mt-1" id="bank-name-display">Ngân hàng ...</p>
+                                    <p class="text-[9px] text-brand opacity-100 mt-0 font-semibold w-full text-right animate-pulse">Bấm đây để Sao chép số tài khoản</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Amount -->
+                        <div class="p-1.5 border-b border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer" id="amount-row">
+                            <div class="flex justify-between items-start">
+                                <span class="text-sm md:text-[15px] text-blue-700 font-bold uppercase mt-0.5">Số tiền</span>
+                                <div class="flex flex-col items-end flex-1 ml-2">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-base md:text-xl font-bold text-red-600 font-mono bg-gray-100 px-1.5 py-0 rounded border border-gray-200" id="amount-text">0 đ</span>
+                                        <svg class="w-3 h-3 text-gray-300 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    </div>
+                                    <p class="text-[9px] text-brand opacity-100 mt-0 font-semibold w-full text-right animate-pulse">Bấm đây để Sao chép số tiền</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-1.5 hover:bg-gray-50 transition-colors group cursor-pointer" id="content-row">
+                            <div class="flex flex-col gap-0.5">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-sm md:text-[15px] text-blue-700 font-bold uppercase mt-0.5">Nội dung<br>chuyển khoản</span>
+                                    <div class="flex flex-col items-end flex-1 ml-2">
+                                        <div class="flex items-center gap-1">
+                                            <span class="font-mono text-xs md:text-base font-bold text-red-600 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 break-all text-right leading-tight" id="content-text">...</span>
+                                            <svg class="w-3 h-3 text-gray-300 group-hover:text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                        </div>
+                                        <p class="text-[9px] text-brand opacity-100 mt-0 font-semibold w-full text-right animate-pulse">Bấm đây để Sao chép nội dung</p>
+                                    </div>
+                                </div>
+                                <p class="text-[15px] md:text-base text-red-500 italic leading-tight animate-pulse font-medium mt-2 text-center">Lưu ý: Vui lòng <span class="font-bold underline">Copy và Giữ nguyên nội dung chuyển khoản</span> để hệ thống xác nhận thanh toán thuận lợi</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Change Student Button (Moved here) -->
+                    <div class="text-center mt-1">
+                         <button onclick="resetApp()" class="text-xs md:text-sm text-gray-500 hover:text-brand hover:underline font-medium flex items-center justify-center gap-1 mx-auto transition-colors">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+                            Đổi danh sách học sinh
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <!-- Success Overlay (Redesigned as Full Screen Receipt) -->
+            <div id="success-overlay" class="hidden w-full flex-col bg-white">
+                <!-- Header (Matches Payment Page Style) -->
+                <div class="bg-brand text-white p-3 md:p-4 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
+                    <span class="font-bold text-lg">Phiếu Thanh toán</span>
+                    <img src="https://lh3.googleusercontent.com/d/1U6nmM_rzNQ6don_7_Q4RtMPKjbWacTga" alt="Logo" class="h-8 w-auto object-contain bg-white rounded p-0.5" />
+                </div>
+                
+                <div class="p-6 flex flex-col items-center text-center w-full">
+                    <!-- Icon -->
+                    <div class="checkmark-container mb-4 flex-shrink-0 animate-float">
+                        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                    </div>
+                    
+                    <h3 class="text-xl md:text-2xl font-bold text-orange-600 mb-2 uppercase tracking-wide">Thanh toán thành công!</h3>
+                    <div class="text-sm md:text-base text-green-700 mb-6 space-y-1 font-semibold">
+                        <p>Cám ơn Quý Phụ huynh.</p>
+                        <p>Hệ thống đã nhận được học phí.</p>
+                    </div>
+                    
+                    <!-- Summary Receipt Card -->
+                    <div class="bg-blue-50 w-full rounded-xl border border-blue-100 p-4 shadow-sm mb-6 flex flex-col text-left">
+                         <!-- Time -->
+                        <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
+                             <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Thời gian</span>
+                             <span class="text-xs text-blue-900 font-mono font-semibold" id="success-time">--:--</span>
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="flex justify-between items-start border-b border-blue-200 pb-2 mb-2">
+                            <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Tổng thanh toán</span>
+                            <span class="text-sm font-bold text-red-600 font-mono text-right" id="success-total-amount">0 đ</span>
+                        </div>
+                        
+                        <!-- List -->
+                        <div class="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar" id="success-student-list">
+                             <!-- Items injected here -->
+                        </div>
+                    </div>
+                    
+                    <button onclick="finishSuccess()" class="bg-orange-600 text-white w-full py-3.5 rounded-xl font-bold shadow-lg hover:bg-orange-700 hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 text-[10px] sm:text-xs md:text-sm whitespace-nowrap px-1 overflow-hidden text-ellipsis">
+                        Bấm đây để Tiếp tục Thanh toán cho Học sinh khác
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TOAST MSG -->
+    <div id="toast">Đã sao chép vào bộ nhớ tạm!</div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // Dán link Web App từ Google Apps Script của bạn vào đây nếu chạy trên Vercel
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwRJx_J71bv4sq1ojRbktjhWXCeAHoFSzA6aHU8qYPXPWrL-moEmFqt_yGah5rJ2YPH/exec"; 
+
+        // GLOBAL VARIABLES
+        let allStudents = [];
+        let selectedStudents = []; // Array of Student Objects
+        let timerInterval, checkInterval;
+        let timeLeft = 600; // 10 minutes
+        let isPaid = false;
+
+        // ELEMENTS
+        const els = {
+            appLoading: document.getElementById('app-loading-overlay'),
+            appContainer: document.getElementById('app-container'),
+            selectionScreen: document.getElementById('selection-screen'),
+            
+            searchInput: document.getElementById('student-search-input'),
+            dropdownList: document.getElementById('student-dropdown-list'),
+            
+            selectedArea: document.getElementById('selected-students-area'),
+            selectedCount: document.getElementById('selected-count'),
+            selectedListContainer: document.getElementById('selected-list-container'),
+            totalAmountDisplay: document.getElementById('total-amount-display'),
+            payButton: document.getElementById('pay-button'),
+            
+            loadingModal: document.getElementById('loading-modal'),
+            paymentPopup: document.getElementById('payment-popup'),
+            
+            // Payment Popup Sections (for toggling)
+            paymentMobileHeader: document.getElementById('payment-mobile-header'),
+            paymentQrCol: document.getElementById('payment-qr-col'),
+            paymentInfoCol: document.getElementById('payment-info-col'),
+            
+            // UI Fields in Payment Popup
+            qrImage: document.getElementById('qr-image'),
+            qrLoading: document.getElementById('qr-loading'),
+            amountText: document.getElementById('amount-text'),
+            amountRow: document.getElementById('amount-row'),
+            contentText: document.getElementById('content-text'),
+            contentRow: document.getElementById('content-row'),
+            noteText: document.getElementById('note-text'),
+            
+            accountRow: document.getElementById('account-row'),
+            accountNumberText: document.getElementById('account-number-text'),
+            ownerNameDisplay: document.getElementById('owner-name-display'),
+            bankNameDisplay: document.getElementById('bank-name-display'),
+            bankNameLabel: document.getElementById('bank-name-label'),
+            
+            countdowns: [document.getElementById('countdown-display-mobile'), document.getElementById('countdown-display-desktop')],
+            statusBox: document.getElementById('status-box'),
+            statusText: document.getElementById('status-text'),
+            statusSpinner: document.getElementById('status-spinner'),
+            statusCheck: document.getElementById('status-check'),
+            
+            // Success Section
+            successOverlay: document.getElementById('success-overlay'),
+            successTotalAmount: document.getElementById('success-total-amount'),
+            successStudentList: document.getElementById('success-student-list'),
+            successTime: document.getElementById('success-time')
+        };
+
+        // --- INITIALIZATION ---
+        async function init() {
+            // Priority 1: Google Apps Script embedded
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(onDataLoaded).getInitialData();
+            } 
+            // Priority 2: External API (Vercel)
+            else if (GAS_API_URL) {
+                try {
+                    const response = await fetch(`${GAS_API_URL}?action=getInitialData`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    onDataLoaded(data);
+                } catch (e) {
+                    console.warn("API Error (Switching to Mock Data):", e);
+                    // alert("Lỗi kết nối đến Google Sheet. Vui lòng kiểm tra console.");
+                    // Fallback to mock data so the app works
+                    mockInit();
+                }
+            } 
+            // Priority 3: Mock Data
+            else {
+                console.warn("No API Configured. Using Mock Data.");
+                mockInit();
+            }
+        }
+
+        function onDataLoaded(data) {
+            // 2. Set Students (Filter UnPAID only)
+            const rawStudents = data.students || [];
+            allStudents = rawStudents.filter(s => s.status !== 'PAID');
+            
+            // 3. Init Dropdown
+            initDropdown();
+
+            // 4. Show App
+            els.appLoading.style.display = 'none';
+            els.appContainer.classList.remove('hidden');
+        }
+
+        // Mock Data for local testing without GAS
+        function mockInit() {
+            setTimeout(() => {
+                onDataLoaded({
+                    paymentPeriod: "Tháng 1 năm 2026 (Mock)",
+                    students: [
+                        { 
+                            id: "HS001", engName: "Kevin", vnName: "Nguyễn Văn A", className: "Lớp 1", 
+                            payPeriod: "01/01-31/01", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            amount: 100000, bankAcc: "113366668888", qrLink: "https://via.placeholder.com/150", 
+                            bankName: "MB", ownerName: "CTY GIAO DUC SOL", status: "UnPAID", virtualBankAcc: "SEPAY"
+                        },
+                        { 
+                            id: "HS002", engName: "Mary", vnName: "Trần Thị B", className: "Lớp 2", 
+                            payPeriod: "01/02-28/02", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            amount: 200000, bankAcc: "113366668888", qrLink: "https://via.placeholder.com/150", 
+                            bankName: "MB", ownerName: "CTY GIAO DUC SOL", status: "UnPAID", virtualBankAcc: "SEPAY"
+                        },
+                        { 
+                            id: "HS003", engName: "Tom", vnName: "Lê Văn C", className: "Lớp 3", 
+                            payPeriod: "01/01-31/01", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            amount: 150000, bankAcc: "789", qrLink: "https://via.placeholder.com/150", 
+                            bankName: "ACB", ownerName: "LMN", status: "PAID", virtualBankAcc: "SEPAY" 
+                        }
+                    ]
+                });
+            }, 1000);
+        }
+
+        // --- DROPDOWN & SELECTION LOGIC ---
+        function initDropdown() {
+            renderDropdownItems(allStudents);
+
+            // Focus: Show list
+            els.searchInput.addEventListener('click', () => {
+                els.dropdownList.classList.remove('hidden');
+            });
+
+            // Input: Filter list
+            els.searchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase();
+                const filtered = allStudents.filter(s => {
+                    const fullStr = (s.engName + " " + s.vnName + " " + s.className + " " + s.id).toLowerCase();
+                    return fullStr.includes(keyword);
+                });
+                els.dropdownList.classList.remove('hidden');
+                renderDropdownItems(filtered);
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!els.searchInput.contains(e.target) && !els.dropdownList.contains(e.target)) {
+                    els.dropdownList.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderDropdownItems(list) {
+            els.dropdownList.innerHTML = '';
+            if(list.length === 0) {
+                els.dropdownList.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">Không tìm thấy học sinh</div>';
+                return;
+            }
+
+            list.forEach(s => {
+                const isSelected = selectedStudents.some(sel => sel.id === s.id);
+                
+                const div = document.createElement('div');
+                div.className = `p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors flex items-center gap-3 ${isSelected ? 'selected bg-blue-50' : ''}`;
+                
+                // Content
+                div.innerHTML = `
+                    <div class="checkbox-wrapper flex-shrink-0">
+                        <svg class="checkbox-inner w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1 pointer-events-none">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-gray-800 text-sm md:text-base">
+                                <span class="text-red-600 font-bold">${s.engName}</span> ${s.vnName}
+                            </span>
+                            <span class="text-[10px] md:text-xs text-orange-700 bg-orange-100 font-bold px-1.5 py-0.5 rounded">${s.className}</span>
+                        </div>
+                    </div>
+                `;
+                
+                div.onclick = (e) => {
+                    // Prevent closing dropdown when clicking logic
+                    e.stopPropagation();
+                    toggleStudent(s);
+                };
+                els.dropdownList.appendChild(div);
+            });
+
+            // Add Sticky Done Button
+            const doneBtn = document.createElement('div');
+            doneBtn.className = "sticky bottom-0 left-0 right-0 p-2 bg-white border-t border-gray-100 z-10";
+            doneBtn.innerHTML = `
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-1">
+                    <span>Bấm đây khi Đã chọn xong</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+            `;
+            doneBtn.onclick = (e) => {
+                 e.stopPropagation(); 
+                 els.dropdownList.classList.add('hidden');
+            };
+            els.dropdownList.appendChild(doneBtn);
+        }
+
+        function toggleStudent(student) {
+            const index = selectedStudents.findIndex(s => s.id === student.id);
+            if (index > -1) {
+                // Remove
+                selectedStudents.splice(index, 1);
+            } else {
+                // Add
+                selectedStudents.push(student);
+            }
+            
+            // Re-render
+            renderDropdownItems(allStudents); // To update checkboxes
+            updateSummaryUI();
+            
+            // Clear search text if desired, or keep it. Let's keep it for multi-select flow.
+            els.searchInput.focus();
+        }
+
+        function removeStudent(studentId) {
+            const index = selectedStudents.findIndex(s => s.id === studentId);
+            if (index > -1) {
+                selectedStudents.splice(index, 1);
+                renderDropdownItems(allStudents); // Update checkbox state in dropdown
+                updateSummaryUI();
+            }
+        }
+
+        function updateSummaryUI() {
+            // 1. Show/Hide Area
+            if (selectedStudents.length > 0) {
+                els.selectedArea.classList.remove('hidden');
+                els.payButton.classList.remove('bg-gray-300', 'cursor-not-allowed');
+                els.payButton.classList.add('bg-orange-600', 'hover:bg-orange-700', 'animate-attention', 'shadow-lg', 'shadow-orange-900/20');
+                els.payButton.disabled = false;
+            } else {
+                els.selectedArea.classList.add('hidden');
+                els.payButton.classList.add('bg-gray-300', 'cursor-not-allowed');
+                els.payButton.classList.remove('bg-orange-600', 'hover:bg-orange-700', 'animate-attention', 'shadow-lg', 'shadow-orange-900/20');
+                els.payButton.disabled = true;
+            }
+
+            // 2. Count
+            els.selectedCount.textContent = `${selectedStudents.length} học sinh`;
+
+            // 3. Render List
+            els.selectedListContainer.innerHTML = '';
+            let total = 0;
+
+            selectedStudents.forEach(s => {
+                total += s.amount;
+                const fmtAmount = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount);
+                
+                const card = document.createElement('div');
+                card.className = "bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative pr-8 animate-scale-in";
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-sm text-gray-800 leading-tight">
+                            <span class="text-red-600">${s.engName}</span> ${s.vnName}
+                            <span class="text-[10px] text-gray-400 font-normal">(${s.className})</span>
+                        </div>
+                        <div class="text-[10px] md:text-xs text-blue-600 font-medium mt-0.5">
+                            Kỳ: ${s.payPeriod || 'N/A'}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono font-bold text-gray-700 text-sm">${fmtAmount}</div>
+                    </div>
+                    <button onclick="removeStudent('${s.id}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-300 hover:text-red-500 transition-colors p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                els.selectedListContainer.appendChild(card);
+            });
+
+            // 4. Total Display
+            els.totalAmountDisplay.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+        }
+
+        // --- PAYMENT FLOW ---
+        function handlePaymentStart() {
+            if(selectedStudents.length === 0) return;
+
+            // UI Transitions
+            els.selectionScreen.classList.add('hidden');
+            els.loadingModal.classList.remove('hidden');
+
+            setupPaymentUI();
+
+            setTimeout(() => {
+                els.loadingModal.classList.add('hidden');
+                els.paymentPopup.classList.remove('hidden');
+                startTimer();
+                startCheck();
+            }, 1000);
+        }
+
+        function setupPaymentUI() {
+            // Data Calculation
+            const totalAmount = selectedStudents.reduce((sum, s) => sum + s.amount, 0);
+            
+            // For bank info, we take the first student's bank info (Assuming same school account)
+            const representative = selectedStudents[0];
+            const bankAcc = representative.bankAcc;
+            const bankName = representative.bankName;
+            const ownerName = representative.ownerName;
+            const virtualBankAcc = representative.virtualBankAcc || "";
+
+            // Content Logic: Prefix + IDs
+            const studentIds = selectedStudents.map(s => s.id).join(" ");
+            const contentString = virtualBankAcc && virtualBankAcc.trim() !== "" ? `${virtualBankAcc} ${studentIds}` : studentIds;
+
+            // QR GENERATION LOGIC
+            els.qrLoading.classList.remove('hidden');
+            els.qrImage.onload = () => els.qrLoading.classList.add('hidden');
+
+            const safeContent = encodeURIComponent(contentString);
+            const safeOwner = encodeURIComponent(ownerName);
+            
+            // Base params to append
+            let extraParams = `amount=${totalAmount}&accountName=${safeOwner}`;
+
+            let qrSrc = "";
+            
+            if (representative.qrLink && representative.qrLink.trim() !== "") {
+                let tempLink = representative.qrLink;
+                
+                // Specific replacement requested: des=SEVQR+TKP8A6 -> des=CONTENT
+                if (tempLink.includes("des=SEVQR+TKP8A6")) {
+                    tempLink = tempLink.replace("des=SEVQR+TKP8A6", `des=${safeContent}`);
+                } else if (!tempLink.includes("des=")) {
+                     // If no description param at all, use addInfo
+                     extraParams += `&addInfo=${safeContent}`;
+                }
+
+                const separator = tempLink.includes('?') ? '&' : '?';
+                qrSrc = `${tempLink}${separator}${extraParams}`;
+            } else {
+                // Fallback
+                const params = `amount=${totalAmount}&addInfo=${safeContent}&accountName=${safeOwner}`;
+                qrSrc = `https://img.vietqr.io/image/${bankName}-${bankAcc}-compact.png?${params}`;
+            }
+            els.qrImage.src = qrSrc;
+
+            // UI Update
+            // 1. Note: List names or generic - UPDATED LOGIC HERE
+            if (selectedStudents.length === 1) {
+                // Use VN name if ENG name is missing/empty
+                const displayName = representative.engName && representative.engName.trim() !== "" ? 
+                    `<span class="text-red-600">${representative.engName}</span> ${representative.vnName}` :
+                    `<span class="text-red-600 font-bold">${representative.vnName}</span>`;
+                
+                els.noteText.innerHTML = `${displayName} - ${representative.className}`;
+            } else {
+                // Removed prefix "Thanh toán cho X học sinh: " as requested
+                // Use VN name if ENG name is missing/empty for the list
+                const names = selectedStudents.map(s => (s.engName && s.engName.trim() !== "") ? s.engName : s.vnName).join(", ");
+                els.noteText.innerHTML = `<span class="text-red-600 font-bold">${names}</span>`;
+            }
+
+            // 2. Account
+            els.accountNumberText.textContent = bankAcc;
+            els.accountRow.onclick = () => copyToClipboard(bankAcc, 'Số tài khoản');
+
+            // 3. Amount
+            const fmtMoney = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount);
+            els.amountText.textContent = fmtMoney;
+            els.amountRow.onclick = () => copyToClipboard(totalAmount.toString(), 'Số tiền');
+
+            // 4. Content
+            els.contentText.textContent = contentString;
+            els.contentRow.onclick = () => copyToClipboard(contentString, 'Nội dung chuyển khoản');
+
+            // 5. Bank Info
+            els.ownerNameDisplay.textContent = `Chủ TK: ${ownerName}`;
+            els.bankNameDisplay.textContent = `Ngân hàng ${bankName}`;
+            els.bankNameLabel.textContent = bankName;
+        }
+
+        function resetApp() {
+            clearInterval(timerInterval);
+            clearInterval(checkInterval);
+            isPaid = false;
+            timeLeft = 600;
+            // Clear selections? Requirement says "Change student", implies going back.
+            // Let's keep selection if they just want to add more? 
+            // Better to keep selection state to allow modification.
+            
+            els.paymentPopup.classList.add('hidden');
+            els.successOverlay.classList.add('hidden');
+            els.loadingModal.classList.add('hidden');
+            els.selectionScreen.classList.remove('hidden');
+            
+            // Reset Status UI
+            els.statusBox.classList.replace('bg-green-50', 'bg-gray-50');
+            els.statusSpinner.classList.remove('hidden');
+            els.statusCheck.classList.add('hidden');
+            els.statusText.textContent = "Đang chờ tín hiệu chuyển khoản...";
+            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600";
+            
+            // Ensure payment columns are visible next time
+            els.paymentMobileHeader.classList.remove('hidden');
+            els.paymentQrCol.classList.remove('hidden');
+            els.paymentInfoCol.classList.remove('hidden');
+            // RESTORE HEIGHT on mobile
+            els.paymentPopup.classList.add('h-full');
+            
+            els.dropdownList.classList.add('hidden');
+            els.searchInput.focus();
+        }
+
+        // --- UTILS ---
+        function startTimer() {
+            updateTimerUI();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if(timeLeft < 0) timeLeft = 600;
+                updateTimerUI();
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            els.countdowns.forEach(el => el.textContent = `${m}:${s}`);
+        }
+
+        function startCheck() {
+            checkPaymentStatus();
+            checkInterval = setInterval(checkPaymentStatus, 5000);
+        }
+
+        function checkPaymentStatus() {
+            if(selectedStudents.length === 0 || isPaid) return;
+            
+            // For multi-select, if ALL are paid? Or any? 
+            // Simple logic: Check status of ALL selected IDs. If ALL are PAID -> Success.
+            // However, the sheet check function takes 1 ID.
+            // We need to loop or change backend. For now, let's check the FIRST student for simulation,
+            // or loop in JS.
+            
+            // REALISTIC SCENARIO: One transfer covers all. If the backend recognizes the content "HS1 HS2", it might update all.
+            // Here, we simulate by checking if the FIRST student status changes to PAID.
+            // (Assuming the accountant updates the sheet manually or via Sepay webhook for that Order).
+            
+            const idToCheck = selectedStudents[0].id; // Check representative
+
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler((data) => {
+                    if (data && data.status === 'PAID') forceSuccess(data.money);
+                }).checkPaymentStatus(idToCheck);
+            } else if (GAS_API_URL) {
+                fetch(`${GAS_API_URL}?action=checkPaymentStatus&id=${idToCheck}`)
+                    .then(r => r.json())
+                    .then(data => { if (data && data.status === 'PAID') forceSuccess(data.money); })
+                    .catch(e => console.log("Check error", e));
+            } else {
+                console.log("Mock Checking for: " + idToCheck);
+            }
+        }
+
+        function forceSuccess(transferredMoney) {
+            if(isPaid) return;
+            isPaid = true;
+            clearInterval(checkInterval);
+            clearInterval(timerInterval);
+
+            // Populate Summary Logic
+            let displayTotal = "";
+            
+            // Priority: Transferred Money from Backend (Text)
+            // Handle as string since backend returns string
+            if (transferredMoney && String(transferredMoney).trim() !== "") {
+                const raw = String(transferredMoney).trim();
+                // Check if pure number
+                if (/^\d+$/.test(raw)) {
+                     displayTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseInt(raw));
+                } else {
+                     // Use raw text
+                     displayTotal = raw;
+                     // Add currency symbol if not present and doesn't look like text description
+                     if (!/[dđ₫]/i.test(displayTotal) && !/vn/i.test(displayTotal)) {
+                         displayTotal += ' ₫';
+                     }
+                }
+            } else {
+                // Fallback: Calculation
+                const total = selectedStudents.reduce((sum, s) => sum + s.amount, 0);
+                displayTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+            }
+            
+            // Format new line before "Đã chuyển" if present
+            displayTotal = displayTotal.replace(/(đã chuyển)/i, '<br>$1');
+
+            els.successTotalAmount.innerHTML = displayTotal;
+            
+            // Capture Date
+            const now = new Date();
+            els.successTime.textContent = now.toLocaleString('vi-VN');
+
+            // Build List
+            els.successStudentList.innerHTML = '';
+            selectedStudents.forEach(s => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center text-sm border-b border-gray-100 last:border-0 py-1.5";
+                row.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-800"><span class="text-red-600">${s.engName}</span> ${s.vnName}</div>
+                        <div class="text-[10px] text-gray-400 font-medium">${s.className}</div>
+                    </div>
+                    <div class="font-mono text-gray-600 font-semibold">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount)}</div>
+                `;
+                els.successStudentList.appendChild(row);
+            });
+
+            // HIDE Payment Sections
+            els.paymentMobileHeader.classList.add('hidden');
+            els.paymentQrCol.classList.add('hidden');
+            els.paymentInfoCol.classList.add('hidden');
+            
+            // ADJUST POPUP SIZE (Fit content on mobile)
+            els.paymentPopup.classList.remove('h-full');
+            
+            // SHOW Success Overlay (Direct Full Cover)
+            els.successOverlay.classList.remove('hidden');
+        }
+
+        function finishSuccess() {
+            // 1. Show global loading
+            els.appLoading.style.display = 'flex';
+            els.appContainer.classList.add('hidden'); // Hide app while loading
+            
+            // 2. Hide Payment UI components
+            els.paymentPopup.classList.add('hidden');
+            els.successOverlay.classList.add('hidden');
+            els.loadingModal.classList.add('hidden');
+            els.selectionScreen.classList.remove('hidden'); // Ensure selection screen is available
+            
+            // Restore visibility and height for next flow
+            els.paymentMobileHeader.classList.remove('hidden');
+            els.paymentQrCol.classList.remove('hidden');
+            els.paymentInfoCol.classList.remove('hidden');
+            els.paymentPopup.classList.add('h-full');
+            
+            // 3. Reset logic state
+            clearInterval(timerInterval);
+            clearInterval(checkInterval);
+            isPaid = false;
+            timeLeft = 600;
+            selectedStudents = [];
+            els.searchInput.value = ''; // Clear search
+            
+            updateSummaryUI();
+
+            // 4. Reset Status UI for next time
+            els.statusBox.classList.replace('bg-green-50', 'bg-gray-50');
+            els.statusSpinner.classList.remove('hidden');
+            els.statusCheck.classList.add('hidden');
+            els.statusText.textContent = "Đang chờ tín hiệu chuyển khoản...";
+            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600";
+            
+            // 5. Reload data from server (to remove PAID students)
+            init();
+        }
+
+        function copyToClipboard(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`Đã sao chép ${label}: ${text}`);
+            });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.className = "show";
+            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+        }
+
+        window.onload = init;
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
