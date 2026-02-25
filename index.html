@@ -757,6 +757,7 @@
 
             // Content Logic: Prefix + IDs
             const studentIds = selectedStudents.map(s => s.id).join(" ");
+            // Logic requested: VirtualBankAcc + " " + IDs
             const contentString = virtualBankAcc && virtualBankAcc.trim() !== "" ? `${virtualBankAcc} ${studentIds}` : studentIds;
 
             // QR GENERATION LOGIC
@@ -774,10 +775,12 @@
             if (representative.qrLink && representative.qrLink.trim() !== "") {
                 let tempLink = representative.qrLink;
                 
-                // Specific replacement requested: des=SEVQR+TKP8A6 -> des=CONTENT
-                if (tempLink.includes("des=SEVQR+TKP8A6")) {
-                    tempLink = tempLink.replace("des=SEVQR+TKP8A6", `des=${safeContent}`);
-                } else if (!tempLink.includes("des=")) {
+                // Replace "des=" with new content
+                if (tempLink.includes("des=")) {
+                    // Replace the text "des=" and its value with "des=" + content
+                    // Using regex to replace the entire parameter value to ensure clean URL
+                    tempLink = tempLink.replace(/des=[^&]*/, `des=${safeContent}`);
+                } else {
                      // If no description param at all, use addInfo
                      extraParams += `&addInfo=${safeContent}`;
                 }
