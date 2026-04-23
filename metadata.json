@@ -1,5 +1,5 @@
 {
-  "name": "SOL Payment v1",
-  "description": "Trang thanh toán QR Code tích hợp mô phỏng luồng Sepay, không cần backend, deploy ngay lên Vercel.",
+  "name": "Remix: NghiaPhantom_SOL Payment v1_Submit 25.2.26_rmx22426",
+  "description": "Update: (1) Load ds hs UNPAID vào ds (2) Hiển thị thông tin thanh toán tương ứng \u003d\u003e đúng số tiền và tài khoản (3) Thanh toán automation nhiều tài khoản bank tùy chỉnh trên ggSheet",
   "requestFramePermissions": []
 }

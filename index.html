@@ -151,24 +151,24 @@
         <div id="selection-screen" class="bg-white rounded-2xl shadow-xl p-4 md:p-8 max-w-md mx-auto animate-fade-in w-full flex-shrink-0 relative flex flex-col max-h-[95vh]">
             
             <!-- Header Section -->
-            <div class="text-center mb-4 flex-shrink-0">
+            <div class="text-center mb-2 flex-shrink-0">
                 <!-- LOGO -->
-                <div class="inline-block mb-2">
+                <div class="inline-block mb-1">
                      <img src="https://lh3.googleusercontent.com/d/1F6QVU_qcyV8BMn9LinWD30-ipzL4X1Dx" referrerpolicy="no-referrer" alt="Hình ảnh từ Google Drive" class="h-20 md:h-28 w-auto object-contain mx-auto drop-shadow-md hover:scale-105 transition-transform duration-300 mix-blend-multiply">
                 </div>
 
                 <!-- TITLE CHANGED & Uppercase -->
                 <!-- CHANGED: text-brand -> text-orange-600 -->
-                <h1 class="text-lg md:text-xl font-bold text-orange-600 uppercase tracking-tight">
+                <h1 class="text-lg md:text-xl font-bold text-orange-600 uppercase tracking-tight line-clamp-2 md:line-clamp-none">
                     HỆ THỐNG THANH TOÁN HỌC PHÍ
                 </h1>
                 <!-- Payment Period Text Removed as requested -->
             </div>
 
-            <div class="space-y-4 flex flex-col flex-1 min-h-0">
+            <div class="space-y-2 flex flex-col flex-1 min-h-0">
                 <div class="flex-shrink-0">
                     <!-- INSTRUCTION TEXT -->
-                    <p class="text-sm text-gray-600 mb-2 text-center">
+                    <p class="text-[13px] md:text-sm text-gray-600 mb-1 text-center">
                         Quý Phụ huynh vui lòng <span class="font-bold text-blue-700">tìm và chọn học sinh</span><br>(có thể chọn nhiều học sinh):
                     </p>
 
@@ -198,15 +198,34 @@
 
                 <!-- SUMMARY SECTION (New Area) -->
                 <!-- Changed bg-gray-50 to bg-blue-50 and border-gray-200 to border-blue-100 -->
-                <div id="selected-students-area" class="flex-1 overflow-y-auto min-h-0 bg-blue-50 rounded-xl border border-blue-100 p-2 hidden">
-                    <div class="flex justify-between items-center mb-2 px-1">
-                        <span class="text-xs font-bold text-gray-500 uppercase">Danh sách đã chọn</span>
-                        <span class="text-xs font-bold text-brand" id="selected-count">0 học sinh</span>
+                <div id="selected-students-area" class="flex-1 flex flex-col min-h-0 bg-blue-50 rounded-xl border border-blue-100 p-2 hidden relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-1.5 px-1 flex-shrink-0 z-10 relative">
+                        <span class="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase">Danh sách đã chọn</span>
+                        <span class="text-[9px] md:text-[10px] font-bold text-brand" id="selected-count">0 học sinh</span>
                     </div>
                     
-                    <!-- Container for cards -->
-                    <div id="selected-list-container" class="space-y-2">
-                        <!-- Cards injected here -->
+                    <!-- Top Indicator Badge -->
+                    <div id="scroll-top-indicator" class="absolute top-[26px] right-2 z-20 pointer-events-none transition-all duration-300 opacity-0 translate-y-[-10px]">
+                        <div onclick="scrollSelectedArea('up')" class="bg-orange-500 text-white text-[11px] font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center justify-center gap-1.5 animate-bounce cursor-pointer pointer-events-auto hover:bg-orange-600 transition-colors">
+                            <svg class="w-3.5 h-3.5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                            Cuộn lên
+                        </div>
+                    </div>
+                    
+                    <!-- Scroll wrapper -->
+                    <div id="selected-list-wrapper" class="flex-1 overflow-y-auto no-scrollbar relative min-h-0 pb-1 pt-1" onscroll="handleSelectedScroll(this)">
+                        <!-- Container for cards -->
+                        <div id="selected-list-container" class="space-y-2 relative">
+                            <!-- Cards injected here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Indicator Badge -->
+                    <div id="scroll-bottom-indicator" class="absolute bottom-2 right-2 z-20 pointer-events-none transition-all duration-300 opacity-0 translate-y-[10px]">
+                        <div onclick="scrollSelectedArea('down')" class="bg-orange-500 text-white text-[11px] font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center justify-center gap-1.5 animate-bounce cursor-pointer pointer-events-auto hover:bg-orange-600 transition-colors">
+                            Cuộn xuống
+                            <svg class="w-3.5 h-3.5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
                     </div>
                 </div>
 
@@ -307,7 +326,7 @@
                     <div class="bg-gray-50 rounded-lg p-1.5 flex items-center justify-center gap-2 border border-gray-100" id="status-box">
                         <svg id="status-spinner" class="animate-spin h-5 w-5 md:h-6 md:w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <svg id="status-check" class="h-5 w-5 md:h-6 md:w-6 text-green-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span class="text-[10px] md:text-sm font-semibold text-blue-600" id="status-text">Đang chờ tín hiệu chuyển khoản...</span>
+                        <span class="text-[10px] md:text-sm font-semibold text-blue-600 text-center flex-1 leading-tight animate-pulse" id="status-text"><span class="underline uppercase">Hệ thống ĐANG CHỜ</span> Quý Phụ huynh chuyển khoản, hãy thực hiện theo <span class="font-bold text-red-600">CÁCH 1</span> hoặc <span class="font-bold text-red-600">CÁCH 2</span> ...</span>
                     </div>
 
                     <!-- Note for Manual Copy -->
@@ -404,21 +423,21 @@
                     
                     <!-- Summary Receipt Card -->
                     <div class="bg-blue-50 w-full rounded-xl border border-blue-100 p-4 shadow-sm mb-6 flex flex-col text-left">
-                         <!-- Time -->
-                        <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2">
-                             <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Thời gian</span>
-                             <span class="text-xs text-blue-900 font-mono font-semibold" id="success-time">--:--</span>
+                        <!-- List (Row 1) -->
+                        <div class="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar border-b border-blue-200 pb-2 mb-2" id="success-student-list">
+                             <!-- Items injected here -->
                         </div>
                         
-                        <!-- Total -->
+                        <!-- Total (Row 2) -->
                         <div class="flex justify-between items-start border-b border-blue-200 pb-2 mb-2">
                             <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Tổng thanh toán</span>
                             <span class="text-sm font-bold text-red-600 font-mono text-right" id="success-total-amount">0 đ</span>
                         </div>
                         
-                        <!-- List -->
-                        <div class="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar" id="success-student-list">
-                             <!-- Items injected here -->
+                         <!-- Time (Row 4) -->
+                        <div class="flex justify-between items-center">
+                             <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Thời gian</span>
+                             <span class="text-xs text-blue-900 font-mono font-semibold" id="success-time">--:--</span>
                         </div>
                     </div>
                     
@@ -437,7 +456,7 @@
     <script>
         // --- CONFIGURATION ---
         // Dán link Web App từ Google Apps Script của bạn vào đây nếu chạy trên Vercel
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwRJx_J71bv4sq1ojRbktjhWXCeAHoFSzA6aHU8qYPXPWrL-moEmFqt_yGah5rJ2YPH/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzNUFgb2O0l7-zG1xrhgYpDG-PvBBmaOUTDz-lM81-dDcSWJC7bwnCHHo95Hg_hVC9f/exec"; 
 
         // GLOBAL VARIABLES
         let allStudents = [];
@@ -547,19 +566,19 @@
                     students: [
                         { 
                             id: "HS001", engName: "Kevin", vnName: "Nguyễn Văn A", className: "Lớp 1", 
-                            payPeriod: "01/01-31/01", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            payPeriod: "01/01-31/01",
                             amount: 100000, bankAcc: "113366668888", qrLink: "https://via.placeholder.com/150", 
                             bankName: "MB", ownerName: "CTY GIAO DUC SOL", status: "UnPAID", virtualBankAcc: "SEPAY"
                         },
                         { 
                             id: "HS002", engName: "Mary", vnName: "Trần Thị B", className: "Lớp 2", 
-                            payPeriod: "01/02-28/02", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            payPeriod: "01/02-28/02",
                             amount: 200000, bankAcc: "113366668888", qrLink: "https://via.placeholder.com/150", 
                             bankName: "MB", ownerName: "CTY GIAO DUC SOL", status: "UnPAID", virtualBankAcc: "SEPAY"
                         },
                         { 
                             id: "HS003", engName: "Tom", vnName: "Lê Văn C", className: "Lớp 3", 
-                            payPeriod: "01/01-31/01", startDateInform: "05/01", zaloLink: "https://zalo.me/g/...",
+                            payPeriod: "01/01-31/01",
                             amount: 150000, bankAcc: "789", qrLink: "https://via.placeholder.com/150", 
                             bankName: "ACB", ownerName: "LMN", status: "PAID", virtualBankAcc: "SEPAY" 
                         }
@@ -701,22 +720,20 @@
                 const fmtAmount = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount);
                 
                 const card = document.createElement('div');
-                card.className = "bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative pr-8 animate-scale-in";
+                card.className = "bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center text-center relative px-8 animate-scale-in";
                 card.innerHTML = `
-                    <div>
-                        <div class="font-bold text-sm text-gray-800 leading-tight">
-                            <span class="text-red-600">${s.engName}</span> ${s.vnName}
-                            <span class="text-[10px] text-gray-400 font-normal">(${s.className})</span>
-                        </div>
-                        <div class="text-[10px] md:text-xs text-blue-600 font-medium mt-0.5">
-                            Kỳ: ${s.payPeriod || 'N/A'}
-                        </div>
+                    <div class="font-bold text-[21px] text-gray-800 leading-tight mb-1">
+                        <span class="text-red-600">${s.engName}</span> ${s.vnName}
+                        <span class="text-[15px] text-gray-400 font-normal">(${s.className})</span>
                     </div>
-                    <div class="text-right">
-                        <div class="font-mono font-bold text-gray-700 text-sm">${fmtAmount}</div>
+                    <div class="text-[15px] md:text-[18px] text-blue-600 font-medium mb-1">
+                        Kỳ: ${s.payPeriod || 'N/A'}
+                    </div>
+                    <div class="font-mono font-bold text-gray-700 text-[21px]">
+                        ${fmtAmount}
                     </div>
                     <button onclick="removeStudent('${s.id}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-300 hover:text-red-500 transition-colors p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 `;
                 els.selectedListContainer.appendChild(card);
@@ -724,6 +741,46 @@
 
             // 4. Total Display
             els.totalAmountDisplay.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+
+            // Update Scroll Indicators
+            setTimeout(() => {
+                handleSelectedScroll(document.getElementById('selected-list-wrapper'));
+            }, 50);
+        }
+
+        // --- NEW: Handle Selected List Scroll Indicators ---
+        function handleSelectedScroll(el) {
+            if(!el) return;
+            const topInd = document.getElementById('scroll-top-indicator');
+            const botInd = document.getElementById('scroll-bottom-indicator');
+            if(!topInd || !botInd) return;
+            
+            // Top Indicator
+            if(el.scrollTop > 5) { // Small threshold to prevent flashing at top
+                topInd.classList.remove('opacity-0', 'translate-y-[-10px]');
+                topInd.classList.add('opacity-100', 'translate-y-0');
+            } else {
+                topInd.classList.add('opacity-0', 'translate-y-[-10px]');
+                topInd.classList.remove('opacity-100', 'translate-y-0');
+            }
+            
+            // Bottom Indicator (epsilon of 5px)
+            if(el.scrollHeight > el.clientHeight && Math.ceil(el.scrollTop + el.clientHeight) < el.scrollHeight - 5) {
+                botInd.classList.remove('opacity-0', 'translate-y-[10px]');
+                botInd.classList.add('opacity-100', 'translate-y-0');
+            } else {
+                botInd.classList.add('opacity-0', 'translate-y-[10px]');
+                botInd.classList.remove('opacity-100', 'translate-y-0');
+            }
+        }
+
+        // --- NEW: Function to manually scroll area ---
+        function scrollSelectedArea(direction) {
+            const wrapper = document.getElementById('selected-list-wrapper');
+            if(!wrapper) return;
+            // Scroll roughly one card height (approx 120px)
+            const scrollAmount = direction === 'up' ? -120 : 120;
+            wrapper.scrollBy({ top: scrollAmount, behavior: 'smooth' });
         }
 
         // --- PAYMENT FLOW ---
@@ -847,8 +904,8 @@
             els.statusBox.classList.replace('bg-green-50', 'bg-gray-50');
             els.statusSpinner.classList.remove('hidden');
             els.statusCheck.classList.add('hidden');
-            els.statusText.textContent = "Đang chờ tín hiệu chuyển khoản...";
-            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600";
+            els.statusText.innerHTML = "<span class=\"underline uppercase\">Hệ thống ĐANG CHỜ</span> Quý Phụ huynh chuyển khoản, hãy thực hiện theo <span class=\"font-bold text-red-600\">CÁCH 1</span> hoặc <span class=\"font-bold text-red-600\">CÁCH 2</span> ...";
+            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600 text-center flex-1 leading-tight animate-pulse";
             
             // Ensure payment columns are visible next time
             els.paymentMobileHeader.classList.remove('hidden');
@@ -959,12 +1016,13 @@
                     <div class="flex-1">
                         <div class="font-bold text-gray-800"><span class="text-red-600">${s.engName}</span> ${s.vnName}</div>
                         <div class="text-[10px] text-gray-400 font-medium">${s.className}</div>
+                        <div class="text-[10px] text-blue-600 font-medium mt-0.5">Kỳ thanh toán: ${s.payPeriod || 'N/A'}</div>
                     </div>
                     <div class="font-mono text-gray-600 font-semibold">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount)}</div>
                 `;
                 els.successStudentList.appendChild(row);
             });
-
+            
             // HIDE Payment Sections
             els.paymentMobileHeader.classList.add('hidden');
             els.paymentQrCol.classList.add('hidden');
@@ -1008,8 +1066,8 @@
             els.statusBox.classList.replace('bg-green-50', 'bg-gray-50');
             els.statusSpinner.classList.remove('hidden');
             els.statusCheck.classList.add('hidden');
-            els.statusText.textContent = "Đang chờ tín hiệu chuyển khoản...";
-            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600";
+            els.statusText.innerHTML = "<span class=\"underline uppercase\">Hệ thống ĐANG CHỜ</span> Quý Phụ huynh chuyển khoản, hãy thực hiện theo <span class=\"font-bold text-red-600\">CÁCH 1</span> hoặc <span class=\"font-bold text-red-600\">CÁCH 2</span> ...";
+            els.statusText.className = "text-[10px] md:text-sm font-semibold text-blue-600 text-center flex-1 leading-tight animate-pulse";
             
             // 5. Reload data from server (to remove PAID students)
             init();
