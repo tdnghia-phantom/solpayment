@@ -270,9 +270,8 @@
         </div>
 
         <!-- SCREEN 3: PAYMENT POPUP (Main) -->
-        <!-- Changed to h-full on mobile to fill screen and prevent outer scroll -->
-        <!-- UPDATED: md:max-h-[85vh] as requested -->
-        <div id="payment-popup" class="bg-white rounded-xl shadow-2xl hidden w-full h-full md:h-auto md:max-h-[85vh] overflow-hidden flex flex-col md:flex-row animate-scale-in border border-gray-200 relative">
+        <!-- Changed to max-h-full on mobile to fill screen and prevent outer scroll, letting flex structure handle scrolling -->
+        <div id="payment-popup" class="bg-white rounded-xl shadow-2xl hidden w-full h-full max-h-[100dvh] md:h-auto md:max-h-[85vh] overflow-hidden flex flex-col md:flex-row animate-scale-in border border-gray-200 relative">
             
             <!-- HEADER (Mobile) - Added ID to hide on success -->
             <div id="payment-mobile-header" class="bg-brand text-white p-2 flex justify-between items-center md:hidden flex-shrink-0 shadow-md z-10 relative h-10">
@@ -408,7 +407,7 @@
             </div>
             
             <!-- Success Overlay (Redesigned as Full Screen Receipt) -->
-            <div id="success-overlay" class="hidden w-full h-full md:h-auto absolute inset-0 z-50 flex-col bg-white md:static">
+            <div id="success-overlay" class="hidden w-full h-auto flex flex-col flex-1 bg-white z-50 min-h-0">
                 <!-- Header (Matches Payment Page Style) -->
                 <div class="bg-brand text-white p-3 md:p-4 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
                     <span class="font-bold text-lg">Phiếu Thanh toán</span>
