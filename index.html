@@ -127,10 +127,16 @@
         .selected .checkbox-inner {
             display: block;
         }
-    </style>
+    body {
+        background-color: #f8fafc;
+        background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+        background-size: 24px 24px;
+        background-position: center center;
+    }
+</style>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-gray-100 text-gray-800 antialiased h-[100dvh] w-screen overflow-hidden flex flex-col items-center justify-start md:justify-center p-2 pt-4 md:pt-2">
+<body class="text-gray-800 antialiased h-[100dvh] w-screen overflow-hidden flex flex-col items-center justify-start md:justify-center p-2 pt-4 md:pt-2">
 
     <!-- INITIAL LOADING OVERLAY -->
     <div id="app-loading-overlay">
@@ -1011,14 +1017,14 @@
             els.successStudentList.innerHTML = '';
             selectedStudents.forEach(s => {
                 const row = document.createElement('div');
-                row.className = "flex justify-between items-center text-sm border-b border-gray-100 last:border-0 py-1.5";
+                row.className = "flex justify-between items-center border-b border-gray-100 last:border-0 py-2";
                 row.innerHTML = `
-                    <div class="flex-1">
-                        <div class="font-bold text-gray-800"><span class="text-red-600">${s.engName}</span> ${s.vnName}</div>
-                        <div class="text-[10px] text-gray-400 font-medium">${s.className}</div>
-                        <div class="text-[10px] text-blue-600 font-medium mt-0.5">Kỳ thanh toán: ${s.payPeriod || 'N/A'}</div>
+                    <div class="flex-1 pr-2">
+                        <div class="font-bold text-gray-800 text-[18px] leading-tight mb-0.5"><span class="text-red-600">${s.engName}</span> ${s.vnName}</div>
+                        <div class="text-[13px] text-gray-500 font-medium">${s.className}</div>
+                        <div class="text-[13px] text-blue-700 font-bold mt-0.5">Kỳ thanh toán: ${s.payPeriod || 'N/A'}</div>
                     </div>
-                    <div class="font-mono text-gray-600 font-semibold">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount)}</div>
+                    <div class="font-mono text-gray-700 font-bold text-[16px]">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.amount)}</div>
                 `;
                 els.successStudentList.appendChild(row);
             });
